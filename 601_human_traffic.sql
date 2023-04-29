@@ -17,13 +17,12 @@ insert into Stadium (id, visit_date, people) values
 select id,visit_date,people from 
 (select *,
 -- case WHEN lead(id) OVER (PARTITION BY NULL)=id+1 THEN 'Y' 
-CASE WHEN lead(id) over (PARTITION BY NULL)=id+1 and lead(id,2) OVER (PARTITION BY NULL)=id+2 THEN 'Y'
-WHEN lead(id) OVER (PARTITION BY NULL)=id+1 AND lag(id) over (PARTITION BY NULL) = id-1 THEN 'Y' 
-WHEN lag(id,2) OVER (PARTITION BY NULL)=id-2 AND lag(id) over (PARTITION BY NULL) = id-1 THEN 'Y' 
-WHEN lead(id) OVER (PARTITION BY NULL) is NULL AND lag(id) over (PARTITION BY NULL) = id-1 AND lag(id,2) over (PARTITION BY NULL)=id-2 THEN 'Y' 
+CASE WHEN lead(id) over (ORDER BY visit_date)=id+1 and lead(id,2) OVER (ORDER BY visit_date)=id+2 THEN 'Y'
+WHEN lead(id) OVER (ORDER BY visit_date)=id+1 AND lag(id) over (ORDER BY visit_date) = id-1 THEN 'Y' 
+WHEN lag(id,2) OVER (ORDER BY visit_date)=id-2 AND lag(id) over (ORDER BY visit_date) = id-1 THEN 'Y' 
+WHEN lead(id) OVER (ORDER BY visit_date) is NULL AND lag(id) over (ORDER BY visit_date) = id-1 AND lag(id,2) over (ORDER BY visit_date)=id-2 THEN 'Y' 
 ELSE 'N'
 end as filt
 from Stadium
-where people>=100
-ORDER BY visit_date) x 
+where people>=100) x 
 where filt like "Y";
