@@ -9,7 +9,7 @@ insert into Insurance (pid, tiv_2015, tiv_2016, lat, lon) values ('4', '10', '40
 
 
 
-select sum(tiv_2016) as tiv_2016 from insurance 
+select round(sum(tiv_2016),2) as tiv_2016 from insurance 
 where tiv_2015 in 
 (select tiv_2015 from insurance GROUP BY tiv_2015 having count(tiv_2015)>1)
 and concat(lat,lon) not in
