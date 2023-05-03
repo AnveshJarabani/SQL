@@ -39,9 +39,14 @@ values(1       ,'2020-01-02',       120),
 -- * For transactions_count >= 4, No customers visited the bank and did more than three transactions so we will stop at transactions_count = 3
 
 select * from transactions1336;
-select * from  visits1336 v
+select distinct transactions_count,
+count(concat(user_id,visit_date)) over (PARTITION BY transactions_count) as visits_count from
+(select v.user_id,v.visit_date,
+count(concat(t.user_id,transaction_date)) over(PARTITION BY concat(v.user_id,visit_date)) as transactions_count
+from  visits1336 v
 left join transactions1336 t ON
-v.user_id=t.user_id and v.visit_date=t.transaction_date;
+v.user_id=t.user_id and v.visit_date=t.transaction_date) x
+;
 
 
 
@@ -65,14 +70,14 @@ WITH RECURSIVE t1 AS(
                            COALESCE(num_trans,0) as num_trans
                     FROM ((
                           SELECT visit_date, user_id, COUNT(*) as num_visits
-                          FROM visits
+                          FROM visits1336
                           GROUP BY 1, 2) AS a
                          LEFT JOIN
                           (
                            SELECT transaction_date,
                                  user_id,
                                  count(*) as num_trans
-                            FROM transactions
+                            FROM transactions1336
                           GROUP BY 1, 2) AS b
                          ON a.visit_date = b.transaction_date and a.user_id = b.user_id)
                       ),
