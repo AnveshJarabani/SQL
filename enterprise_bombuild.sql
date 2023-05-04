@@ -4,13 +4,13 @@
 with RECURSIVE cte as 
     (select *, cast(`QTY` as FLOAT) as TOPLEVEL
     from st_bm_br_bom
-    where `MATERIAL`='839-198032-001'
+    where `MATERIAL`='CY-210257'
     union all
     (SELECT s.*, cast(s.QTY as FLOAT)*cte.TOPLEVEL as TOPLEVEL
      from st_bm_br_bom s
      join cte on 
      cte.`COMPONENT`=s.`MATERIAL`))
-SELECT * from cte
-where `COMPONENT` = 'UC-27-56178-00' OR `MATERIAL` = 'UC-27-56178-00';
+SELECT * from cte;
+where `COMPONENT` = 'CY-103720' OR `MATERIAL` = 'CY-103720';
 
-select * from st_bm_br_bom;
+select distinct `TOP LEVEL` from cy_adj_yt;
