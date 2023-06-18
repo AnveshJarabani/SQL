@@ -227,13 +227,6 @@ FROM
     lte;
 
 -- 11.FETCH the top 5 athletes who have won the most gold medals.
-SELECT
-    *
-FROM
-    athlete_events
-LIMIT
-    10;
-
 WITH cte AS (
     SELECT
         name,
@@ -280,9 +273,382 @@ LIMIT
     5;
 
 -- 13.FETCH the top 5 most successful countries IN olympics.Success IS defined by no of medals won.
+SELECT
+    *
+FROM
+    noc_regions;
+
+WITH cte AS (
+    SELECT
+        region,
+        CASE
+            WHEN medal IS NOT NULL THEN 1
+            ELSE 0
+        END AS medals
+    FROM
+        athlete_events ae
+        JOIN noc_regions noc ON noc.noc = ae.noc
+),
+xte AS (
+    SELECT
+        region,
+        sum(medals) AS total_medals
+    FROM
+        cte
+    GROUP BY
+        region
+    ORDER BY
+        total_medals DESC
+)
+SELECT
+    region,
+    total_medals,
+    rank() over (
+        ORDER BY
+            total_medals DESC
+    ) AS rnk
+FROM
+    xte
+LIMIT
+    5;
+
 -- 14.List down total gold, silver AND broze medals won by each country.
--- 15.List down total gold,silver AND broze medals won by each country corresponding TO each olympic games.16.Identify which country won the most gold, most silver AND most bronze medals IN each olympic games.
+WITH cte AS (
+    SELECT
+        region,
+        IF(medal = 'Gold', 1, 0) gold,
+        IF(medal = 'silver', 1, 0) silver,
+        IF(medal = 'bronze', 1, 0) bronze
+    FROM
+        athlete_events ae
+        JOIN noc_regions noc ON noc.noc = ae.noc
+)
+SELECT
+    region,
+    sum(gold) gold,
+    sum(silver) silver,
+    sum(bronze) bronze
+FROM
+    cte
+GROUP BY
+    region
+ORDER BY
+    gold DESC,
+    silver DESC,
+    bronze DESC;
+
+-- 15.List down total gold,silver AND broze medals won by each country corresponding TO each olympic games.
+WITH cte AS (
+    SELECT
+        region,
+        games,
+        IF(medal = 'Gold', 1, 0) gold,
+        IF(medal = 'silver', 1, 0) silver,
+        IF(medal = 'bronze', 1, 0) bronze
+    FROM
+        athlete_events ae
+        JOIN noc_regions noc ON noc.noc = ae.noc
+)
+SELECT
+    games,
+    region,
+    sum(gold) gold,
+    sum(silver) silver,
+    sum(bronze) bronze
+FROM
+    cte
+GROUP BY
+    region,
+    games
+ORDER BY
+    gold DESC,
+    silver DESC,
+    bronze DESC;
+
+--  16.Identify which country won the most gold, most silver AND most bronze medals IN each olympic games.
+WITH cte AS (
+    SELECT
+        region,
+        games,
+        IF(medal = 'Gold', 1, 0) gold,
+        IF(medal = 'silver', 1, 0) silver,
+        IF(medal = 'bronze', 1, 0) bronze
+    FROM
+        athlete_events ae
+        JOIN noc_regions noc ON noc.noc = ae.noc
+),
+xte AS (
+    SELECT
+        games,
+        region,
+        sum(gold) gold,
+        sum(silver) silver,
+        sum(bronze) bronze
+    FROM
+        cte
+    GROUP BY
+        region,
+        games
+),
+yte AS (
+    SELECT
+        *,
+        rank() over (
+            PARTITION by games
+            ORDER BY
+                gold DESC
+        ) AS max_gold,
+        rank() over (
+            PARTITION by games
+            ORDER BY
+                silver DESC
+        ) AS max_silver,
+        rank() over (
+            PARTITION by games
+            ORDER BY
+                bronze DESC
+        ) AS max_bronze
+    FROM
+        xte
+),
+bte AS (
+    SELECT
+        games,
+        IF(max_gold = 1, concat(region, '-', gold), NULL) max_gold,
+        IF(
+            max_silver = 1,
+            concat(region, '-', silver),
+            NULL
+        ) max_silver,
+        IF(
+            max_bronze = 1,
+            concat(region, '-', bronze),
+            NULL
+        ) max_bronze
+    FROM
+        yte
+    ORDER BY
+        games
+)
+SELECT
+    games,
+    GROUP_CONCAT(max_gold) max_gold,
+    GROUP_CONCAT(max_silver) max_silver,
+    GROUP_CONCAT(max_bronze) max_bronze
+FROM
+    bte
+GROUP BY
+    games;
+
 -- 17.Identify which country won the most gold,most silver, most bronze medals AND the most medals IN each olympic games.
+WITH cte AS (
+    SELECT
+        region,
+        games,
+        IF(medal = 'Gold', 1, 0) gold,
+        IF(medal = 'silver', 1, 0) silver,
+        IF(medal = 'bronze', 1, 0) bronze
+    FROM
+        athlete_events ae
+        JOIN noc_regions noc ON noc.noc = ae.noc
+),
+gte AS (
+    SELECT
+        games,
+        region,
+        IF(medal IS NOT NULL, 1, 0) medal
+    FROM
+        athlete_events ae
+        JOIN noc_regions noc ON noc.noc = ae.noc
+),
+qte AS (
+    SELECT
+        games,
+        region,
+        sum(medal) AS medals
+    FROM
+        gte
+    GROUP BY
+        games,
+        region
+),
+rnkd_all AS (
+    SELECT
+        games,
+        region,
+        medals,
+        rank() over (
+            PARTITION by games
+            ORDER BY
+                medals DESC
+        ) AS rnk
+    FROM
+        qte
+),
+max_mdls AS (
+    SELECT
+        games,
+        IF(rnk = 1, concat(region, '-', medals), NULL) AS max_medals
+    FROM
+        rnkd_all
+),
+xte AS (
+    SELECT
+        games,
+        region,
+        sum(gold) gold,
+        sum(silver) silver,
+        sum(bronze) bronze
+    FROM
+        cte
+    GROUP BY
+        region,
+        games
+),
+yte AS (
+    SELECT
+        *,
+        rank() over (
+            PARTITION by games
+            ORDER BY
+                gold DESC
+        ) AS max_gold,
+        rank() over (
+            PARTITION by games
+            ORDER BY
+                silver DESC
+        ) AS max_silver,
+        rank() over (
+            PARTITION by games
+            ORDER BY
+                bronze DESC
+        ) AS max_bronze
+    FROM
+        xte
+),
+bte AS (
+    SELECT
+        games,
+        IF(max_gold = 1, concat(region, '-', gold), NULL) max_gold,
+        IF(
+            max_silver = 1,
+            concat(region, '-', silver),
+            NULL
+        ) max_silver,
+        IF(
+            max_bronze = 1,
+            concat(region, '-', bronze),
+            NULL
+        ) max_bronze
+    FROM
+        yte
+    ORDER BY
+        games
+),
+prevs AS (
+    SELECT
+        games,
+        GROUP_CONCAT(max_gold) max_gold,
+        GROUP_CONCAT(max_silver) max_silver,
+        GROUP_CONCAT(max_bronze) max_bronze
+    FROM
+        bte
+    GROUP BY
+        games
+)
+SELECT
+    prevs.*,
+    max_medals
+FROM
+    prevs
+    LEFT JOIN max_mdls mx ON mx.games = prevs.games
+WHERE
+    max_medals IS NOT NULL;
+
 -- 18.Which countries have never won gold medal but have won silver / bronze medals ? 
+WITH cte AS (
+    SELECT
+        region,
+        IF(medal = 'Gold', 1, 0) gold,
+        IF(medal = 'silver', 1, 0) silver,
+        IF(medal = 'bronze', 1, 0) bronze
+    FROM
+        athlete_events ae
+        JOIN noc_regions noc ON noc.noc = ae.noc
+    WHERE
+        medal != 'Gold'
+        AND medal IS NOT NULL
+)
+SELECT
+    region,
+    sum(gold) gold,
+    sum(silver) silver,
+    sum(bronze) bronze
+FROM
+    cte
+GROUP BY
+    region;
+
 -- 19.IN which Sport / event, India has won highest medals.
+WITH cte AS (
+    SELECT
+        region,
+        sport,
+        IF(medal IS NOT NULL, 1, 0) medal
+    FROM
+        athlete_events ae
+        JOIN noc_regions noc ON noc.noc = ae.noc
+),
+xte AS (
+    SELECT
+        sport,
+        sum(medal) total_medals
+    FROM
+        cte
+    WHERE
+        region = 'India'
+    GROUP BY
+        sport
+)
+SELECT
+    sport,
+    total_medals
+FROM
+    xte
+ORDER BY
+    total_medals DESC
+LIMIT
+    1;
+
 -- 20.Break down ALL olympic games WHERE india won medal FOR Hockey AND how many medals IN each olympic games.
+WITH cte AS (
+    SELECT
+        region,
+        sport,
+        games,
+        IF(medal IS NOT NULL, 1, 0) medal
+    FROM
+        athlete_events ae
+        JOIN noc_regions noc ON noc.noc = ae.noc
+    WHERE
+        region = 'India'
+        AND sport = 'Hockey'
+        AND medal IS NOT NULL
+),
+xte AS (
+    SELECT
+        sport,
+        games,
+        sum(medal) total_medals
+    FROM
+        cte
+    GROUP BY
+        sport,
+        games
+)
+SELECT
+    *
+FROM
+    xte
+ORDER BY
+    total_medals DESC;
