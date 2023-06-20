@@ -3,7 +3,7 @@
 WITH cte AS (
     SELECT
         user_name,
-        count(user_id) AS ct
+        COUNT(user_id) AS ct
     FROM
         users
     GROUP BY
@@ -23,17 +23,18 @@ WHERE
             cte
     );
 
---2. WRITE a SQL query TO FETCH the SECOND last record FROM employee TABLE.
-WITH cte AS (
-    SELECT
-        `emp_ID`,
-        ROW_NUMBER() over(
-            ORDER BY
-                `emp_ID` DESC
-        ) AS rn
-    FROM
-        emp_tfq2
-)
+--2. WRITE a SQL query TO FETCH the SECOND last record
+FROM
+    employee TABLE.WITH cte AS (
+        SELECT
+            `emp_ID`,
+            ROW_NUMBER() over(
+                ORDER BY
+                    `emp_ID` DESC
+            ) AS rn
+        FROM
+            emp_tfq2
+    )
 SELECT
     *
 FROM
@@ -48,15 +49,16 @@ WHERE
             rn = 2
     );
 
--- 3.WRITE a SQL query TO display ONLY the details of employees who either earn the highest salary OR the lowest salary IN each department FROM the employee TABLE.
-WITH cte AS (
-    SELECT
-        *,
-        max(salary) over(PARTITION BY `DEPT_NAME`) AS max,
-        min(`SALARY`) over(PARTITION BY `DEPT_NAME`) AS min
-    FROM
-        emp_tfq2
-)
+-- 3.WRITE a SQL query TO display ONLY the details of employees who either earn the highest salary OR the lowest salary IN each department
+FROM
+    the employee TABLE.WITH cte AS (
+        SELECT
+            *,
+            MAX(salary) over(PARTITION BY `DEPT_NAME`) AS max,
+            MIN(`SALARY`) over(PARTITION BY `DEPT_NAME`) AS min
+        FROM
+            emp_tfq2
+    )
 SELECT
     *
 FROM
@@ -65,7 +67,7 @@ WHERE
     `SALARY` = max
     OR `SALARY` = min;
 
--- 4.FROM the doctors TABLE,FETCH the details of doctors who WORK IN the same hospital but IN different specialty.
+-- 4.FROM the doctors TABLE, FETCH the details of doctors who WORK IN the same hospital but IN different specialty.
 SELECT
     d1.*
 FROM
@@ -74,7 +76,10 @@ FROM
 WHERE
     d1.speciality != d2.speciality;
 
---  sub question - get docs. with any sepciality from same hospital
+-- sub question - get docs.
+WITH any sepciality
+FROM
+    same hospital
 SELECT
     d1.name,
     d1.speciality,
@@ -85,7 +90,11 @@ FROM
 WHERE
     d1.name != d2.name;
 
--- 5. FROM the login_details TABLE,FETCH the users who logged IN consecutively 3 OR more times.
+-- 5.
+-- FROM
+--     the login_details TABLE,
+--     FETCH the users who logged IN consecutively 3
+--     OR more times.
 SELECT
     DISTINCT l1.user_name
 FROM
@@ -119,4 +128,181 @@ FROM
 WHERE
     x.repeated_names IS NOT NULL;
 
---
+-- 6.
+-- FROM
+--     the students TABLE,
+--     WRITE a SQL query TO interchange the adjacent student NAMES.
+CREATE TABLE studnts_tfq_sql6 (
+    id int PRIMARY KEY,
+    student_name varchar(50) NOT NULL
+);
+
+INSERT INTO
+    studnts_tfq_sql6
+VALUES
+    (1, 'James'),
+    (2, 'Michael'),
+    (3, 'George'),
+    (4, 'Stewart'),
+    (5, 'Robin');
+
+SELECT
+    id,
+    CASE
+        WHEN id % 2 != 0 THEN lead(student_name, 1, student_name) over(
+            ORDER BY
+                id
+        )
+        ELSE lag(student_name) over(
+            ORDER BY
+                id
+        )
+    END AS new_student_name
+FROM
+    studnts_tfq_sql6;
+
+-- 7.FROM the weather TABLE, FETCH ALL the records WHEN London had extremely cold temperature FOR 3 consecutive days OR more.
+WITH cte AS (
+    SELECT
+        *,
+        IF(
+            (
+                id + 1 = lead(id, 1) over(
+                    ORDER BY
+                        id
+                )
+                AND id + 2 = lead(id, 2) over(
+                    ORDER BY
+                        id
+                )
+            )
+            OR (
+                id -1 = lag(id, 1) over(
+                    ORDER BY
+                        id
+                )
+                AND id + 1 = lead(id, 1) over(
+                    ORDER BY
+                        id
+                )
+            )
+            OR (
+                id -1 = lag(id, 1) over(
+                    ORDER BY
+                        id
+                )
+                AND id -2 = lag(id, 2) over(
+                    ORDER BY
+                        id
+                )
+            ),
+            'Yes',
+            'No'
+        ) AS filt
+    FROM
+        weather
+    WHERE
+        temperature < 0
+)
+SELECT
+    id,
+    city,
+    temperature,
+    DAY
+FROM
+    cte
+WHERE
+    filt = 'Yes';
+
+-- 8. FROM the following 3 tables ( event_category, physician_speciality, patient_treatment ), write a SQL query to get the histogram of specialties of the unique physicians who have done the procedures but never did prescribe anything.
+SELECT
+    *
+FROM
+    event_category;
+
+SELECT
+    *
+FROM
+    physician_speciality;
+
+SELECT
+    *
+FROM
+    patient_treatment;
+
+WITH presc AS (
+    SELECT
+        e.physician_id
+    FROM
+        patient_treatment e
+        JOIN physician_speciality p ON e.physician_id = p.physician_id
+        JOIN event_category ec ON e.event_name = ec.event_name
+    WHERE
+        category = 'Prescription'
+),
+proc AS (
+    SELECT
+        e.physician_id
+    FROM
+        patient_treatment e
+        JOIN physician_speciality p ON e.physician_id = p.physician_id
+        JOIN event_category ec ON e.event_name = ec.event_name
+    WHERE
+        category = 'Procedure'
+),
+subq AS (
+    SELECT
+        *
+    FROM
+        proc
+    WHERE
+        physician_id NOT IN (
+            SELECT
+                *
+            FROM
+                presc
+        )
+)
+SELECT
+    speciality,
+    count(ps.physician_id) AS speciality_count
+FROM
+    subq
+    JOIN physician_speciality ps ON ps.physician_id = subq.physician_id
+GROUP BY
+    speciality;
+
+-- 9.Find the top 2 accounts WITH the maximum number of UNIQUE patients ON a monthly basis.
+WITH cte AS (
+    SELECT
+        MONTHNAME(date) AS MONTH,
+        account_id,
+        count(DISTINCT patient_id) AS no_of_unique_patients
+    FROM
+        patient_logs
+    GROUP BY
+        MONTH,
+        account_id
+),
+xte AS (
+    SELECT
+        *,
+        DENSE_RANK() over (
+            PARTITION by MONTH
+            ORDER BY
+                no_of_unique_patients DESC
+        ) AS rn
+    FROM
+        cte
+)
+SELECT
+    MONTH,
+    account_id,
+    no_of_unique_patients
+FROM
+    xte
+WHERE
+    rn = 1;
+    SELECT * from patient_logs;
+
+    
