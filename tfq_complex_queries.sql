@@ -303,6 +303,228 @@ FROM
     xte
 WHERE
     rn = 1;
-    SELECT * from patient_logs;
 
-    
+SELECT
+    *
+FROM
+    patient_logs;
+
+-- 10.SQL Query TO FETCH “ N ” consecutive records FROM a TABLE based ON a certain condition
+SELECT
+    *
+FROM
+    weather;
+
+INSERT INTO
+    weather
+VALUES
+    (
+        1,
+        'London',
+        -1,
+        STR_STR_TO_DATE('2021-01-01', '%%Y-%M-%d-%d')
+    ),
+    (
+        2,
+        'London',
+        -2,
+        STR_STR_TO_DATE('2021-01-02', '%%Y-%M-%d-%d')
+    ),
+    (
+        3,
+        'London',
+        4,
+        STR_STR_TO_DATE('2021-01-03', '%%Y-%M-%d-%d')
+    ),
+    (
+        4,
+        'London',
+        1,
+        STR_STR_TO_DATE('2021-01-04', '%%Y-%M-%d-%d')
+    ),
+    (
+        5,
+        'London',
+        -2,
+        STR_STR_TO_DATE('2021-01-05', '%%Y-%M-%d-%d')
+    ),
+    (
+        6,
+        'London',
+        -5,
+        STR_STR_TO_DATE('2021-01-06', '%%Y-%M-%d-%d')
+    ),
+    (
+        7,
+        'London',
+        -7,
+        STR_STR_TO_DATE('2021-01-07', '%%Y-%M-%d-%d')
+    ),
+    (
+        8,
+        'London',
+        5,
+        STR_STR_TO_DATE('2021-01-08', '%%Y-%M-%d-%d')
+    ),
+    (
+        9,
+        'London',
+        -20,
+        STR_STR_TO_DATE('2021-01-09', '%%Y-%M-%d-%d')
+    ),
+    (
+        10,
+        'London',
+        20,
+        STR_STR_TO_DATE('2021-01-10', '%%Y-%M-%d-%d')
+    ),
+    (
+        11,
+        'London',
+        22,
+        STR_STR_TO_DATE('2021-01-11', '%%Y-%M-%d-%d')
+    ),
+    (
+        12,
+        'London',
+        -1,
+        STR_STR_TO_DATE('2021-01-12', '%%Y-%M-%d-%d')
+    ),
+    (
+        13,
+        'London',
+        -2,
+        STR_STR_TO_DATE('2021-01-13', '%%Y-%M-%d-%d')
+    ),
+    (
+        14,
+        'London',
+        -2,
+        STR_STR_TO_DATE('2021-01-14', '%%Y-%M-%d-%d')
+    ),
+    (
+        15,
+        'London',
+        -4,
+        STR_STR_TO_DATE('2021-01-15', '%%Y-%M-%d-%d')
+    ),
+    (
+        16,
+        'London',
+        -9,
+        STR_STR_TO_DATE('2021-01-16', '%%Y-%M-%d-%d')
+    ),
+    (
+        17,
+        'London',
+        0,
+        STR_STR_TO_DATE('2021-01-17', '%%Y-%M-%d-%d')
+    ),
+    (
+        18,
+        'London',
+        -10,
+        STR_STR_TO_DATE('2021-01-18', '%%Y-%M-%d-%d')
+    ),
+    (
+        19,
+        'London',
+        -11,
+        STR_STR_TO_DATE('2021-01-19', '%%Y-%M-%d-%d')
+    ),
+    (
+        20,
+        'London',
+        -12,
+        STR_STR_TO_DATE('2021-01-20', '%%Y-%M-%d-%d')
+    ),
+    (
+        21,
+        'London',
+        -11,
+        STR_STR_TO_DATE('2021-01-21', '%%Y-%M-%d-%d')
+    );
+
+WITH cte AS (
+    SELECT
+        *,
+        id - ROW_NUMBER() over(
+            ORDER BY
+                id
+        ) AS diff
+    FROM
+        weather
+    WHERE
+        temperature < 0
+),
+xte AS (
+    SELECT
+        diff,
+        count(id) AS ct
+    FROM
+        cte
+    GROUP BY
+        diff
+    ORDER BY
+        ct DESC
+    LIMIT
+        1
+)
+SELECT
+    id,
+    city,
+    temperature,
+    DAY
+FROM
+    cte
+WHERE
+    diff IN (
+        SELECT
+            diff
+        FROM
+            xte
+    );
+
+CREATE TABLE IF NOT EXISTS orders (
+    order_id varchar(20) PRIMARY KEY,
+    order_date date NOT NULL
+);
+
+DELETE FROM
+    orders;
+
+INSERT INTO
+    orders
+VALUES
+    (
+        'ORD1001',
+        STR_TO_DATE('2021/Jan/01', '%Y/%M/%d')
+    ),
+    (
+        'ORD1002',
+        STR_TO_DATE('2021/Feb/01', '%Y/%M/%d')
+    ),
+    (
+        'ORD1003',
+        STR_TO_DATE('2021/Feb/02', '%Y/%M/%d')
+    ),
+    (
+        'ORD1004',
+        STR_TO_DATE('2021/Feb/03', '%Y/%M/%d')
+    ),
+    (
+        'ORD1005',
+        STR_TO_DATE('2021/Mar/01', '%Y/%M/%d')
+    ),
+    (
+        'ORD1006',
+        STR_TO_DATE('2021/Jun/01', '%Y/%M/%d')
+    ),
+    (
+        'ORD1007',
+        STR_TO_DATE('2021/Dec/25', '%Y/%M/%d')
+    ),
+    (
+        'ORD1008',
+        STR_TO_DATE('2021/Dec/26', '%Y/%M/%d')
+    );
