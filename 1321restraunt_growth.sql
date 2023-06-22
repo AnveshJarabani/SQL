@@ -1,4 +1,4 @@
--- Active: 1682009795450@@mysql12--2.mysql.database.azure.com@3306@leetcode
+s-- Active: 1682009795450@@mysql12--2.mysql.database.azure.com@3306@leetcode
 Create table If Not Exists Customer1321 (customer_id int, name varchar(20), visited_on date, amount int);
 Truncate table Customer1321;
 insert into Customer1321 (customer_id, name, visited_on, amount) values ('1', 'Jhon', '2019-01-01', '100');
