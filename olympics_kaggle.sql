@@ -1,8 +1,8 @@
--- Active: 1682038109540@@mysql12--2.mysql.database.azure.com@3306@leetcode
+-- Active: 1688765630308@@localhost@5432@leetcode
 -- 1. HOW MANY GAMES HELD?
 SELECT
     COUNT(DISTINCT `Games`)
-FROM
+FROM 
     athlete_events;
 
 -- 2. LIST OF ALL GAMES HEL
