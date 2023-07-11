@@ -1,123 +1,254 @@
--- Active: 1688765630308@@localhost@5432
-select count(*) from "lbr m-18";
+-- Active: 1688765630308@@localhost@5432@uct_data
+SELECT
+    count(*)
+FROM
+    "lbr m-18";
 
+SELECT
+    "Start Date",
+    date_trunc('month', "Start Date" :: Date) + INTERVAL '1 month' - INTERVAL '1 day'
+FROM
+    "lbr m-18";
 
+SELECT
+    `Order - Material (key)`,
+    sum(`Operation Quantity`)
+FROM
+    (
+        SELECT
+            DISTINCT `Order - Material (Key)`,
+            `Order`,
+            `Operation Quantity`
+        FROM
+            `lbr m-18`
+        WHERE
+            `Fiscal year/period` LIKE '%2022'
+    ) x
+WHERE
+    `Order - Material (key)` IN (
+        'UC-66-73960-00',
+        'UC-66-72032-00',
+        'UC-66-68025-00'
+    )
+GROUP BY
+    `Order - Material (key)`;
 
-select "Start Date",
-date_trunc('YEAR',"Start Date"::Date)  from "lbr m-18";
+SELECT
+    'Order - Material (Key)',
+    STR_TO_DATE(`Start Date`, '%m/%d/%y') AS `Date`
+FROM
+    `lbr m-18`
+ORDER BY
+    `Date` DESC;
 
+USE leetcode;
 
+DROP TABLE login_details;
 
-DROP TABLE ;
+CREATE TABLE login_details(
+    login_id int PRIMARY KEY,
+    user_name varchar(50) NOT NULL,
+    login_date date
+);
 
-select `Order - Material (key)` , sum(`Operation Quantity`) from 
-(SELECT DISTINCT `Order - Material (Key)`,`Order`,`Operation Quantity` FROM `lbr m-18`
-where `Fiscal year/period` like '%2022') x
-where `Order - Material (key)` in 
-('UC-66-73960-00','UC-66-72032-00','UC-66-68025-00')
-GROUP BY `Order - Material (key)`;
+SELECT
+    sub_q.*
+FROM
+    (
+        SELECT
+            DATE_FORMAT(date, '%M') AS MONTH,
+            account_id,
+            COUNT(DISTINCT patient_id) AS no_of_unique_patients,
+            ROW_NUMBER() over (
+                PARTITION BY MONTH
+                ORDER BY
+                    no_of_unique_patients DESC
+            ) AS rn
+        FROM
+            patient_logs
+        GROUP BY
+            MONTH,
+            account_id
+        ORDER BY
+            account_id ASC,
+            no_of_unique_patients DESC
+    ) sub_q
+WHERE
+    sub_q.rn < 3;
 
+SELECT
+    sub_q.*
+FROM
+    employee
+    JOIN (
+        SELECT
+            *,
+            MAX(`SALARY`) OVER (PARTITION BY `DEPT_NAME`) AS max_salary,
+            MIN(`SALARY`) OVER (PARTITION BY `DEPT_NAME`) AS min_salary
+        FROM
+            employee
+    ) sub_q ON employee.`emp_ID` = sub_q.`emp_ID`
+WHERE
+    employee.`SALARY` != sub_q.max_salary
+    OR employee.`SALARY` != sub_q.min_salary;
 
+UPDATE
+    users email
+SET
+    email = CONCAT(user_name, '@email.com');
 
-SELECT 'Order - Material (Key)',STR_TO_DATE(`Start Date`,'%m/%d/%y') as `Date`
-FROM `lbr m-18`
-ORDER BY `Date` DESC;
+t.request_at AS DAY,
+t.status;
 
-use leetcode;
-drop table login_details;
-create table login_details(
-login_id int primary key,
-user_name varchar(50) not null,
-login_date date);
+SELECT
+    user_id,
+    user_name,
+    email
+FROM
+    (
+        SELECT
+            *,
+            ROW_NUMBER() OVER (PARTITION BY user_name) AS rn
+        FROM
+            users
+    ) x
+WHERE
+    x.rn > 1;
 
+SELECT
+    t.request_at AS DAY,
+    round(
+        sum(IF(t.status != 'completed', 1, 0)) / count(t.status),
+        2
+    ) AS `Cancellation Rate`
+FROM
+    Trips t
+WHERE
+    t.request_at BETWEEN '2013-10-01'
+    AND '2013-10-03'
+    AND t.client_id NOT IN (
+        SELECT
+            users_id
+        FROM
+            users
+        WHERE
+            banned NOT LIKE 'No'
+    )
+    AND t.driver_id NOT IN (
+        SELECT
+            users_id
+        FROM
+            users
+        WHERE
+            banned NOT LIKE 'No'
+    )
+GROUP BY
+    t.request_at;
 
+(
+    SELECT
+        t.*
+    FROM
+        trips t
+        JOIN (
+            SELECT
+                u.users_id
+            FROM
+                users u
+            WHERE
+                u.banned NOT LIKE 'Yes'
+        ) sub_q ON t.client_id = sub_q.users_id
+);
 
-SELECT sub_q.* from 
-(SELECT
-DATE_FORMAT(date,'%M') as month,
-account_id,
-COUNT(distinct patient_id) as no_of_unique_patients,
-ROW_NUMBER() over (PARTITION BY month order by no_of_unique_patients desc) as rn
-from patient_logs
-GROUP BY month,account_id
-ORDER BY account_id ASC, no_of_unique_patients DESC) sub_q
-where sub_q.rn<3;
+SELECT
+    d.name AS Department,
+    sub_q.employee1,
+    sub_q.salary
+FROM
+    department d
+    JOIN (
+        SELECT
+            mx.salary,
+            e.name AS employee1,
+            e.`departmentId`
+        FROM
+            employee1 e
+            JOIN (
+                SELECT
+                    e.`departmentId` AS department,
+                    (
+                        ORDER BY
+                            e.salary
+                        LIMIT
+                            3
+                    ) AS Salary
+                FROM
+                    employee1 e
+                GROUP BY
+                    e.`departmentId`
+            ) mx ON mx.`salary` = e.`salary`
+            AND
+    ) sub_q ON d.id = sub_q.`departmentid`;
 
+SELECT
+    d.`name` AS Department,
+    sub_q.`Employee`,
+    sub_q.salary
+FROM
+    department d
+    JOIN (
+        WITH ranked_salaries AS (
+            SELECT
+                e.`departmentId`,
+                DENSE_RANK() over (
+                    PARTITION BY `departmentId`
+                    ORDER BY
+                        e.salary DESC
+                ) AS rk,
+                e.name,
+                e.salary,
+                e.id
+            FROM
+                employee e
+        )
+        SELECT
+            `departmentId` AS Department,
+            name AS employee,
+            salary
+        FROM
+            ranked_salaries
+        WHERE
+            rk < 4
+        ORDER BY
+            Department
+    ) sub_q ON sub_q.department = d.id;
 
+SELECT
+    e.`departmentId` AS department,
+    DENSE_RANK() over (
+        PARTITION BY `departmentId`
+        ORDER BY
+            e.salary
+    ) AS rk,
+    e.name,
+    e.salary,
+    e.id
+FROM
+    employee e;
 
-select sub_q.* from employee
-join
-(select *,
-MAX(`SALARY`) OVER (PARTITION BY `DEPT_NAME`) as max_salary,
-MIN(`SALARY`) OVER (PARTITION BY `DEPT_NAME`) AS min_salary from employee) sub_q
-on employee.`emp_ID`=sub_q.`emp_ID`
-where employee.`SALARY`!=sub_q.max_salary or employee.`SALARY`!=sub_q.min_salary;
-UPDATE users email
-set email=CONCAT(user_name,'@email.com');
-t.request_at as Day,t.status ;
+SELECT
+    DISTINCT `Standard Text Key`,
+    `Work Center`
+FROM
+    `lbr m-18`;
 
-select user_id,user_name,email from
-(select *,
-ROW_NUMBER() OVER (PARTITION BY user_name) as rn
-from users) x 
-where x.rn>1;
+SELECT
+    DISTINCT `Operation Text`,
+    `Standard Text Key`,
+    `Order - Material (Key)`
+FROM
+    `lbr m-18`
+WHERE
+    `Operation Text` LIKE '%bend%';
 
-
-
-
-select t.request_at as Day,
-round(sum(if(t.status!='completed',1,0))/count(t.status),2) as `Cancellation Rate`
-from Trips t
-WHERE t.request_at BETWEEN '2013-10-01' and '2013-10-03'
-and t.client_id not in (select users_id from users where banned not like 'No')
-and t.driver_id not in (select users_id from users where banned not like 'No')
-GROUP BY t.request_at;
-
-
-
-(select t.* from trips t
-join (
-select u.users_id from users u
-where u.banned not like 'Yes') sub_q
-on t.client_id=sub_q.users_id) ;
-
-
-
-
-
-SELECT d.name as Department,sub_q.employee1,sub_q.salary from department d
-JOIN
-(SELECT mx.salary,e.name as employee1,e.`departmentId` from employee1 e
-JOIN 
-(SELECT e.`departmentId` as department,(order by e.salary limit 3) as Salary from employee1 e
-GROUP BY e.`departmentId`) mx
-on mx.`salary`=e.`salary` and 
-) sub_q on 
-d.id=sub_q.`departmentid`;
-
-
-
-select d.`name` as Department ,sub_q.`Employee`,sub_q.salary from department d
-join 
-(with ranked_salaries as (SELECT e.`departmentId`,
-DENSE_RANK() over (PARTITION BY `departmentId` ORDER BY e.salary desc) as rk,
-e.name,e.salary,e.id
-from employee e)
-select `departmentId` as Department,name as employee,salary from ranked_salaries
-where rk<4
-order by Department) sub_q
-on sub_q.department=d.id;
-SELECT e.`departmentId` as department,
-DENSE_RANK() over (PARTITION BY `departmentId` ORDER BY e.salary) as rk,
-e.name,e.salary,e.id
-from employee e;
-
-
-select DISTINCT `Standard Text Key`,`Work Center` from `lbr m-18`;
-
-select DISTINCT `Operation Text`,`Standard Text Key`,`Order - Material (Key)`
- from `lbr m-18`
-where `Operation Text` like '%bend%';
-
-use uct_data;
-
+USE uct_data;
