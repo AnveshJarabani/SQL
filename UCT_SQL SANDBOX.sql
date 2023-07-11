@@ -1,5 +1,12 @@
--- Active: 1682009795450@@mysql12--2.mysql.database.azure.com@3306@uct_data
-select count(*) from `lbr m-18`;
+-- Active: 1688765630308@@localhost@5432
+select count(*) from "lbr m-18";
+
+
+
+select "Start Date",
+date_trunc('YEAR',"Start Date"::Date)  from "lbr m-18";
+
+
 
 DROP TABLE ;
 

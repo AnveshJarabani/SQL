@@ -1,32 +1,9 @@
-CREATE TABLE students (
-    ID int,
-    Name varchar(64),
-    Gender varchar(64)
-);
-
-INSERT INTO
-    students (ID, Name, Gender)
-VALUES
-    (3, 'Kim', 'F'),
-    (4, 'Molina', 'F'),
-    (5, 'Dev', 'M');
-
 SELECT
-    *
+    l1.num as ConsecutiveNums
 FROM
-    students;
-
-SELECT
-    CASE
-        WHEN count(*) >= 2 THEN max(salary)
-        ELSE NULL
-    END AS SecondHighestSalray
-FROM
-    employee
-WHERE
-    salary <(
-        SELECT
-            max(salary)
-        FROM
-            employee
-    )
+    LOGS l1
+    JOIN LOGS l2 ON
+    l1.id=l2.id+1
+    join logs l3 on 
+    l1.id=l3.id+2
+where l1.num=l2.num and l2.num=l3.num
