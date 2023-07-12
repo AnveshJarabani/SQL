@@ -1,4 +1,7 @@
 -- Active: 1688765630308@@localhost@5432@uct_data
+
+select pg_size_pretty(pg_total_relation_size('"shp"')) as total_size ;
+
 SELECT
     count(*)
 FROM
