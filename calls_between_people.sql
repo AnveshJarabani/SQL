@@ -39,3 +39,14 @@ GROUP BY
 ORDER BY
     from_id,
     to_id;
+
+SELECT
+    LEAST(from_id, to_id) AS person1,
+    GREATEST(from_id, to_id) AS person2,
+    count(*) AS call_count,
+    sum(duration) AS total_duration
+FROM
+    calls
+GROUP BY
+    person1,
+    person2;
