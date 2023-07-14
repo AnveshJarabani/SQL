@@ -11,10 +11,10 @@ WITH cte AS (
         employee
 )
 SELECT
-    emp_id,
     company,
-    salary
+    round(avg(salary),2)
 FROM
     cte
 WHERE
-    rn = ceil((ct / 2) + 1)
+    rn = ct/2 or rn=ct/2+1
+group by company
