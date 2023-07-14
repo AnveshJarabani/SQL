@@ -16,5 +16,5 @@ SELECT
 FROM
     cte
 WHERE
-    rn = ct/2 or rn=ct/2+1
+    rn between ct/2 and ct/2+1
 group by company
