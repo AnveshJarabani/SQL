@@ -1,29 +1,45 @@
 -- Active: 1689145165545@@localhost@5432@postgres@leetcode
 CREATE TABLE accounts (id int, name varchar);
 
-insert into accounts
-(id,name)
-values
-( 1  , 'Winston'),
-( 7  , 'Jonathan');
+INSERT INTO
+    accounts (id, name)
+VALUES
+    (1, 'Winston'),
+    (7, 'Jonathan');
 
-create table logins
-(id int, login_date date);
+CREATE TABLE logins (id int, login_date date);
 
-insert into logins
-(id,login_date)
-values
-( 7  ,'2020-05-30'),
-( 1  ,'2020-05-30'),
-( 7  ,'2020-05-31'),
-( 7  ,'2020-06-01'),
-( 7  ,'2020-06-02'),
-( 7  ,'2020-06-02'),
-( 7  ,'2020-06-03'),
-( 1  ,'2020-06-07'),
-( 7  ,'2020-06-10');
+INSERT INTO
+    logins (id, login_date)
+VALUES
+    (7, '2020-05-30'),
+    (1, '2020-05-30'),
+    (7, '2020-05-31'),
+    (7, '2020-06-01'),
+    (7, '2020-06-02'),
+    (7, '2020-06-02'),
+    (7, '2020-06-03'),
+    (1, '2020-06-07'),
+    (7, '2020-06-10');
 
-
-select *,
-row_number() over(partition by id order by login_date) as rn
-from logins
+WITH consecs AS (
+    SELECT
+        id,
+        login_date,
+        date_trunc('day', login_date) - INTERVAL '1 day' * rank() over(
+            PARTITION by id
+            ORDER BY
+                login_date
+        ) AS rn
+    FROM
+        logins
+)
+SELECT
+    id
+FROM
+    consecs
+GROUP BY
+    id,
+    rn
+HAVING
+    count(id) >= 5
