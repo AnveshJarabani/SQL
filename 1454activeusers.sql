@@ -42,4 +42,19 @@ GROUP BY
     id,
     rn
 HAVING
-    count(id) >= 5
+    count(id) >= 5;
+
+SELECT
+    DISTINCT a.id,
+    name
+FROM
+    logins a
+    JOIN logins b ON a.id = b.id
+    AND b.login_date - a.login_date BETWEEN 1
+    AND 4
+    JOIN accounts ON a.id = accounts.id
+GROUP BY
+    a.id,
+    name
+HAVING
+    count(a.id) >= 4;
