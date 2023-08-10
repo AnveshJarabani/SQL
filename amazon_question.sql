@@ -33,4 +33,3 @@ WITH cte AS (
 
 SELECT * FROM CTE
 ;
-
