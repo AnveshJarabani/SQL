@@ -40,9 +40,10 @@ FROM
     itpr_codes i
     JOIN pn_hrs p ON p."Material" = i."Material"
 WHERE
-    "Product Code" LIKE 'CYM%';
+    "Product Code" iLIKE 'LAM_IND';
 
 SELECT
     DISTINCT "Product Code"
 FROM
-    itpr_codes
+    itpr_codes;
+select * from lbr_pln_hr;
