@@ -31,19 +31,28 @@ WITH pn_hrs AS (
         )
     GROUP BY
         1
+),
+pn_asps AS (
+    SELECT
+        "PART_NUMBER",
+        AVG("SHP_AMOUNT" / "SHIPPED_QTY") AS ASP
+    FROM
+        shp
+    WHERE
+        extract(
+            year
+            FROM
+                "SHIPPED_DATE"
+        ) = 2023
+    GROUP BY
+        1
 )
 SELECT
     i."Product Code",
     i."Material",
-    p.Direct_hrs
+    ph.Direct_hrs,
+    asp.ASP
 FROM
     itpr_codes i
-    JOIN pn_hrs p ON p."Material" = i."Material"
-WHERE
-    "Product Code" iLIKE 'LAM_IND';
-
-SELECT
-    DISTINCT "Product Code"
-FROM
-    itpr_codes;
-select * from lbr_pln_hr;
+    JOIN pn_hrs ph ON ph."Material" = i."Material"
+    JOIN pn_asps asp ON asp."PART_NUMBER" = ph."Material";
