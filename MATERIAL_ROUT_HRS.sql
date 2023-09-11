@@ -1,6 +1,6 @@
 WITH CTE AS (
     SELECT
-        DISTINCT ON ("OP_NUMBER") "PLANT",
+        DISTINCT ON ("MATERIAL", "OP_NUMBER") "PLANT",
         "MATERIAL",
         "SETUP",
         CASE
@@ -20,11 +20,9 @@ WITH CTE AS (
 SELECT
     "PLANT",
     "MATERIAL",
-    SUM("SETUP") :: DECIMAL + SUM("RUN") :: DECIMAL AS "ROUT_HRS"
+    round(SUM("SETUP") :: DECIMAL + SUM("RUN") :: DECIMAL,2) AS "ROUT_HRS"
 FROM
     CTE
-WHERE
-    "MATERIAL" = '0279104-001'
 GROUP BY
     1,
     2;
